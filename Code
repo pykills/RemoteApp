@@ -1,0 +1,412 @@
+import tkinter as tk
+import subprocess
+import os
+import shutil
+
+
+# ============================================================
+# SETTINGS
+# ============================================================
+
+C:\Users\User\AppData\Local\Youtube
+#Input your user at "User"
+
+
+# ============================================================
+# ERROR WINDOW
+# ============================================================
+
+def show_not_found(program):
+    window = tk.Toplevel(root)
+    window.title("RemoteApp")
+    window.geometry("430x230")
+    window.configure(bg="#0d0d0d")
+    window.resizable(False, False)
+
+    tk.Label(
+        window,
+        text="Whoops!",
+        font=("Consolas", 25, "bold"),
+        fg="#ff4444",
+        bg="#0d0d0d"
+    ).pack(pady=(25, 10))
+
+    tk.Label(
+        window,
+        text=f"Programm Not Found\n\n{program}\n\nPlease Try Again.",
+        font=("Consolas", 11),
+        fg="white",
+        bg="#0d0d0d",
+        justify="center"
+    ).pack()
+
+    tk.Button(
+        window,
+        text="OK",
+        command=window.destroy,
+        font=("Consolas", 11),
+        fg="white",
+        bg="#181818",
+        activebackground="#292929",
+        activeforeground="#00ff66",
+        relief="flat",
+        width=12
+    ).pack(pady=15)
+
+
+# ============================================================
+# EXE STARTEN
+# ============================================================
+
+def launch_exe(program_name, path):
+    try:
+        if os.path.isabs(path):
+            if not os.path.isfile(path):
+                show_not_found(program_name)
+                return
+
+            subprocess.Popen([path])
+            return
+
+        found = shutil.which(path)
+
+        if found is None:
+            show_not_found(program_name)
+            return
+
+        subprocess.Popen([found])
+
+    except Exception:
+        show_not_found(program_name)
+
+
+# ============================================================
+# URI STARTEN
+# ============================================================
+
+def launch_uri(program_name, uri):
+    try:
+        os.startfile(uri)
+    except Exception:
+        show_not_found(program_name)
+
+
+# ============================================================
+# CHROME
+# ============================================================
+
+def open_chrome():
+    paths = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.expandvars(
+            r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
+        )
+    ]
+
+    for path in paths:
+        if os.path.isfile(path):
+            try:
+                subprocess.Popen([path])
+                return
+            except Exception:
+                pass
+
+    show_not_found("Google Chrome")
+
+
+# ============================================================
+# TERMINAL
+# ============================================================
+
+def open_terminal():
+    try:
+        subprocess.Popen(
+            ["cmd.exe"],
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+    except Exception:
+        show_not_found("Terminal")
+
+
+def open_terminal_admin():
+    try:
+        subprocess.Popen([
+            "powershell.exe",
+            "-NoProfile",
+            "-Command",
+            'Start-Process "cmd.exe" -Verb RunAs'
+        ])
+    except Exception:
+        show_not_found("Terminal (Admin)")
+
+
+# ============================================================
+# POWERSHELL
+# ============================================================
+
+def open_powershell():
+    try:
+        subprocess.Popen(
+            ["powershell.exe"],
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+    except Exception:
+        show_not_found("PowerShell")
+
+
+def open_powershell_admin():
+    try:
+        subprocess.Popen([
+            "powershell.exe",
+            "-NoProfile",
+            "-Command",
+            'Start-Process "powershell.exe" -Verb RunAs'
+        ])
+    except Exception:
+        show_not_found("PowerShell (Admin)")
+
+
+# ============================================================
+# BUTTON
+# ============================================================
+
+def make_button(text, command):
+    tk.Button(
+        content,
+        text=text,
+        command=command,
+        font=("Consolas", 11),
+        fg="white",
+        bg="#181818",
+        activebackground="#292929",
+        activeforeground="#00ff66",
+        width=38,
+        height=2,
+        relief="flat",
+        bd=0,
+        cursor="hand2"
+    ).pack(pady=4)
+
+
+# ============================================================
+# HAUPTFENSTER
+# ============================================================
+
+root = tk.Tk()
+root.title("RemoteApp")
+root.geometry("650x700")
+root.configure(bg="#0d0d0d")
+root.resizable(False, True)
+
+
+# ============================================================
+# SCROLLBAR
+# ============================================================
+
+container = tk.Frame(root, bg="#0d0d0d")
+container.pack(fill="both", expand=True)
+
+canvas = tk.Canvas(
+    container,
+    bg="#0d0d0d",
+    highlightthickness=0
+)
+
+scrollbar = tk.Scrollbar(
+    container,
+    orient="vertical",
+    command=canvas.yview
+)
+
+canvas.configure(yscrollcommand=scrollbar.set)
+
+scrollbar.pack(side="right", fill="y")
+canvas.pack(side="left", fill="both", expand=True)
+
+content = tk.Frame(
+    canvas,
+    bg="#0d0d0d"
+)
+
+canvas_window = canvas.create_window(
+    (0, 0),
+    window=content,
+    anchor="nw"
+)
+
+
+def update_scroll(event=None):
+    canvas.configure(
+        scrollregion=canvas.bbox("all")
+    )
+
+
+content.bind(
+    "<Configure>",
+    update_scroll
+)
+
+
+def resize_content(event):
+    canvas.itemconfig(
+        canvas_window,
+        width=event.width
+    )
+
+
+canvas.bind(
+    "<Configure>",
+    resize_content
+)
+
+
+# ============================================================
+# MAUSRAD
+# ============================================================
+
+def mouse_wheel(event):
+    canvas.yview_scroll(
+        int(-1 * (event.delta / 120)),
+        "units"
+    )
+
+
+canvas.bind_all(
+    "<MouseWheel>",
+    mouse_wheel
+)
+
+
+# ============================================================
+# TITEL
+# ============================================================
+
+tk.Label(
+    content,
+    text="REMOTEAPP",
+    font=("Consolas", 28, "bold"),
+    fg="#00ff66",
+    bg="#0d0d0d"
+).pack(pady=(25, 5))
+
+
+tk.Label(
+    content,
+    text="● PC ONLINE",
+    font=("Consolas", 12),
+    fg="#00ff66",
+    bg="#0d0d0d"
+).pack(pady=(0, 20))
+
+
+# ============================================================
+# APPLICATIONS
+# ============================================================
+
+tk.Label(
+    content,
+    text="APPLICATIONS",
+    font=("Consolas", 16, "bold"),
+    fg="#00ff66",
+    bg="#0d0d0d"
+).pack(pady=(5, 10))
+
+
+make_button(
+    "▶ Spotify",
+    lambda: launch_uri("Spotify", "spotify:")
+)
+
+make_button(
+    "▶ Discord",
+    lambda: launch_uri("Discord", "discord:")
+)
+
+make_button(
+    "▶ Roblox",
+    lambda: launch_uri("Roblox", "roblox-player:")
+)
+
+make_button(
+    "▶ Steam",
+    lambda: launch_exe("Steam", "steam.exe")
+)
+
+make_button(
+    "▶ Minecraft - NoRisk Client",
+    lambda: launch_exe(
+        "Minecraft - NoRisk Client",
+        NORISK_PATH
+    )
+)
+
+make_button(
+    "▶ Google Chrome",
+    open_chrome
+)
+
+make_button(
+    "▶ Notepad",
+    lambda: launch_exe("Notepad", "notepad.exe")
+)
+
+make_button(
+    "▶ Calculator",
+    lambda: launch_exe("Calculator", "calc.exe")
+)
+
+
+# ============================================================
+# TERMINAL
+# ============================================================
+
+tk.Label(
+    content,
+    text="TERMINAL",
+    font=("Consolas", 16, "bold"),
+    fg="#00ff66",
+    bg="#0d0d0d"
+).pack(pady=(20, 8))
+
+
+make_button(
+    "Open Terminal",
+    open_terminal
+)
+
+make_button(
+    "Run Terminal as Admin",
+    open_terminal_admin
+)
+
+
+# ============================================================
+# POWERSHELL
+# ============================================================
+
+tk.Label(
+    content,
+    text="POWERSHELL",
+    font=("Consolas", 16, "bold"),
+    fg="#00ff66",
+    bg="#0d0d0d"
+).pack(pady=(20, 8))
+
+
+make_button(
+    "Open PowerShell",
+    open_powershell
+)
+
+make_button(
+    "Run PowerShell as Admin",
+    open_powershell_admin
+)
+
+
+# ============================================================
+# START
+# ============================================================
+
+root.mainloop()
